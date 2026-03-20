@@ -31,6 +31,7 @@ logs
 
 # Fabric related
 run/
+tmp/
 
 # Environment variables
 .env
