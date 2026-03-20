@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "yolomirror",
+  "version": "${version}",
+  "name": "YoloMirror",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/yolomirror/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "me.vincentzyu.qwq.yolomirror.client.YoloMirrorClient"
+    ],
+    "main": [
+      "me.vincentzyu.qwq.yolomirror.YoloMirror"
+    ]
+  },
+  "mixins": [
+    "yolomirror.mixins.json",
+    {
+      "config": "yolomirror.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
