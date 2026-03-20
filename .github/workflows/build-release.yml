@@ -3,10 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - 'LICENSE.txt'
-      - '.gitignore'
 
 permissions:
   contents: write
