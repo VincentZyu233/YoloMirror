@@ -96,6 +96,16 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew build --stacktrace --info 2>&1 | tee build.log
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+
+      - name: Upload build log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 1
 
       - name: Check build results
         run: |
