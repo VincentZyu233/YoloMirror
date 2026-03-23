@@ -34,6 +34,9 @@ dependencies {
     
     modImplementation "org.java-websocket:Java-WebSocket:1.5.4"
     include(implementation("org.java-websocket:Java-WebSocket:1.5.4"))
+    
+    modCompileOnly "io.github.llamalad7:mixinextras-common:0.4.1"
+    include(implementation("io.github.llamalad7:mixinextras-fabric:0.4.1"))
 }
 
 processResources {
@@ -66,9 +69,6 @@ java {
 }
 
 jar {
-    from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
-    }
 }
 
 publishing {
