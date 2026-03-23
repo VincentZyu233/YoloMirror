@@ -58,6 +58,14 @@ jobs:
           java-version: '21'
           distribution: 'zulu'
 
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+
       - name: Validate Gradle wrapper
         run: |
           if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
@@ -93,10 +101,10 @@ jobs:
           head -5 ./gradlew
           echo ""
           echo "=== Running gradlew --version ==="
-          ./gradlew --version || echo "Exit code: $?"
+          ./gradlew --version
           echo ""
           echo "=== Running Gradle build ==="
-          ./gradlew build --no-daemon --stacktrace 2>&1 || echo "Exit code: $?"
+          ./gradlew build --no-daemon --stacktrace
           echo "=== Build completed ==="
 
       - name: List build outputs

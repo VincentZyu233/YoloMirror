@@ -1,6 +1,10 @@
 pluginManagement {
     repositories {
         maven {
+            name = 'Aliyun'
+            url = 'https://maven.aliyun.com/repository/public/'
+        }
+        maven {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
@@ -13,5 +17,23 @@ pluginManagement {
             url = 'https://maven.icedlab.tech/loom/'
         }
         gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven {
+            name = 'Aliyun'
+            url = 'https://maven.aliyun.com/repository/public/'
+        }
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'Hanbings Mirror'
+            url = 'https://repository.hanbings.io/proxy/'
+        }
+        mavenCentral()
     }
 }
