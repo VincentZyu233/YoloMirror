@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 win_build.py - 在 Windows 上编译 YoloMirror Fabric 模组
-用法: python win_build.py
+用法: python win_build.py [--version <version>]
 """
 
 import subprocess
 import sys
 import os
 import urllib.request
+import re
+import argparse
 
 # ============================================================
 # 硬编码配置
@@ -59,13 +61,45 @@ def ensure_wrapper_jar(jar_path: str, proxy_url: str):
         sys.exit(1)
 
 
+def update_mod_version(gradle_properties_path: str, new_version: str):
+    """更新 gradle.properties 中的 mod_version"""
+    # 验证版本号格式
+    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', new_version):
+        print(f"[✗] 版本号格式无效: {new_version}")
+        print("    版本号只能包含字母、数字、下划线、横杠和点")
+        sys.exit(1)
+
+    # 读取文件
+    with open(gradle_properties_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # 替换 mod_version
+    new_content = re.sub(r'^mod_version\s*=.*$', f'mod_version = {new_version}', content, flags=re.MULTILINE)
+
+    # 写入文件
+    with open(gradle_properties_path, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+
+    print(f"[*] 已更新 mod_version 为: {new_version}")
+
+
 def main():
+    # 解析命令行参数
+    parser = argparse.ArgumentParser(description="YoloMirror Fabric Mod Builder")
+    parser.add_argument('--version', type=str, help="指定新的模组版本号")
+    args = parser.parse_args()
+
     proxy_url = f"http://{PROXY_HOST}:{PROXY_PORT}"
     java_exe = os.path.join(JAVA_HOME, "bin", "java.exe")
     jar_path = os.path.join(PROJECT_DIR, "gradle", "wrapper", "gradle-wrapper.jar")
+    gradle_properties_path = os.path.join(PROJECT_DIR, "gradle.properties")
 
     # 确保 wrapper jar 存在
     ensure_wrapper_jar(jar_path, proxy_url)
+
+    # 如果指定了版本号，更新 gradle.properties
+    if args.version:
+        update_mod_version(gradle_properties_path, args.version)
 
     # 设置环境变量
     env = os.environ.copy()

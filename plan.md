@@ -159,8 +159,9 @@ src/
 
 ### Phase 1: 基础框架搭建 ✅
 - [x] Fabric Mod Roll 控制 Demo (已完成)
-- [ ] Python 后端基础框架
-- [ ] WebSocket 通信实现
+- [x] Python 后端基础框架
+- [x] WebSocket 通信实现
+- [x] MediaPipe 人头检测与角度计算
 - [ ] PyQt 基础界面 (摄像头显示)
 
 ### Phase 2: MediaPipe 集成
@@ -274,10 +275,37 @@ CONFIG_UPDATE = "config_update"
 - YOLOv8: https://github.com/ultralytics/ultralytics
 - PyQt: https://www.riverbankcomputing.com/software/pyqt/
 
+## 已完成的功能
+
+### Python 后端 (YoloMirrorBackend)
+- **项目位置**: `d:\aaaStuffsaaa\from_git\github\YoloMirrorBackend`
+- **依赖**: 见 `requirements.txt`
+- **运行方式**: 
+  ```bash
+  cd YoloMirrorBackend
+  uv run python main.py
+  ```
+- **功能**:
+  - ✅ WebSocket 服务器 (ws://0.0.0.0:60321)
+  - ✅ MediaPipe 人头检测
+  - ✅ 自动计算头部倾斜角度
+  - ✅ 实时发送 roll 控制指令到客户端
+  - ✅ 未检测到人脸时自动回正 (0度)
+
+### 通信协议
+```json
+// 服务端 -> 客户端
+{
+  "type": "roll_control",
+  "angle": 45.0
+}
+```
+
 ## 下一步行动
 
-1. 创建 Python 后端项目结构
-2. 实现 WebSocket 通信基础框架
-3. 集成 MediaPipe 姿态追踪
-4. 实现 PyQt 基础界面
-5. 连接 Fabric Mod 进行端到端测试
+1. ✅ 创建 Python 后端项目结构
+2. ✅ 实现 WebSocket 通信基础框架
+3. ✅ 集成 MediaPipe 姿态追踪
+4. [ ] 实现 PyQt 基础界面
+5. [ ] 编写 Fabric Mod WebSocket 客户端
+6. [ ] 连接 Fabric Mod 进行端到端测试
