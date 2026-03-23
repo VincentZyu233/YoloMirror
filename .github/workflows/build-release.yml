@@ -28,7 +28,7 @@ jobs:
           MSG="$COMMIT_MSG"
 
           # 从 gradle.properties 提取版本号
-          VERSION=$(grep -E '^mod_version=' gradle.properties | cut -d'=' -f2)
+          VERSION=$(grep -E '^mod_version\s*=' gradle.properties | cut -d'=' -f2 | tr -d ' ')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📦 Version: $VERSION"
 
@@ -69,31 +69,38 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # gradle-wrapper.jar 没有提交到仓库，从 GitHub raw 下载
-      - name: Download gradle-wrapper.jar
+      # 验证 gradle-wrapper.jar 存在
+      - name: Verify gradle-wrapper.jar
         run: |
           WRAPPER_JAR="gradle/wrapper/gradle-wrapper.jar"
-          WRAPPER_URL="https://raw.githubusercontent.com/gradle/gradle/v9.2.1/gradle/wrapper/gradle-wrapper.jar"
-          if [ ! -f "$WRAPPER_JAR" ]; then
-            echo "Downloading gradle-wrapper.jar ..."
-            mkdir -p gradle/wrapper
-            curl -fsSL "$WRAPPER_URL" -o "$WRAPPER_JAR"
-            echo "Downloaded: $(du -sh $WRAPPER_JAR)"
+          if [ -f "$WRAPPER_JAR" ]; then
+            echo "✓ gradle-wrapper.jar exists"
+            ls -lh "$WRAPPER_JAR"
           else
-            echo "gradle-wrapper.jar already exists, skipping."
+            echo "✗ gradle-wrapper.jar not found!"
+            exit 1
           fi
 
-      - name: Build with Gradle Wrapper
+      - name: Build with Gradle
         run: |
           chmod +x gradlew
-          ./gradlew build
+          ./gradlew build --stacktrace --info
 
-      - name: Upload
+      - name: Check build outputs
+        run: |
+          echo "=== Build directory contents ==="
+          ls -la build/ 2>/dev/null || echo "build/ directory not found"
+          echo ""
+          echo "=== libs directory contents ==="
+          ls -la build/libs/ 2>/dev/null || echo "build/libs/ directory not found"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
           path: build/libs/*.jar
           retention-days: 7
+          if-no-files-found: error
 
   # ── 发布到 GitHub Releases ──────────────────────────────
   release:
