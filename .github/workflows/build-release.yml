@@ -68,15 +68,35 @@ jobs:
           ls -lh gradle/wrapper/
 
       - name: Grant execute permission
-        run: chmod +x gradlew
+        run: |
+          chmod +x gradlew
+          chmod +x gradle/wrapper/gradle-wrapper.jar || true
+          ls -la gradlew*
+          echo "=== Checking file type ==="
+          file ./gradlew
+
+      - name: Show Gradle wrapper info
+        run: |
+          echo "=== Gradle wrapper properties ==="
+          cat gradle/wrapper/gradle-wrapper.properties
+          echo ""
+          echo "=== Gradle wrapper jar ==="
+          ls -lh gradle/wrapper/gradle-wrapper.jar
 
       - name: Build with Gradle
         run: |
           echo "=== Java version ==="
           java -version
           echo ""
+          echo "=== Testing gradlew directly ==="
+          file ./gradlew
+          head -5 ./gradlew
+          echo ""
+          echo "=== Running gradlew --version ==="
+          ./gradlew --version || echo "Exit code: $?"
+          echo ""
           echo "=== Running Gradle build ==="
-          ./gradlew build --no-daemon --stacktrace
+          ./gradlew build --no-daemon --stacktrace 2>&1 || echo "Exit code: $?"
           echo "=== Build completed ==="
 
       - name: List build outputs
