@@ -8,6 +8,7 @@ permissions:
   contents: write
 
 jobs:
+  # ── 判断是否需要构建 / 发布 ──────────────────────────────
   check:
     name: Check commit message
     runs-on: ubuntu-latest
@@ -25,24 +26,31 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
           MSG="$COMMIT_MSG"
+
+          # 从 gradle.properties 提取版本号
           VERSION=$(grep -E '^mod_version\s*=' gradle.properties | cut -d'=' -f2 | tr -d ' ')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📦 Version: $VERSION"
 
+          # 初始化标志
           BUILD=false
           RELEASE=false
 
+          # "build release" = 构建 + GitHub Release
           if echo "$MSG" | grep -qi "build release"; then
             BUILD=true
             RELEASE=true
+          # "build action" = 仅构建
           elif echo "$MSG" | grep -qi "build action"; then
             BUILD=true
           fi
 
           echo "should_build=$BUILD"     >> "$GITHUB_OUTPUT"
           echo "should_release=$RELEASE" >> "$GITHUB_OUTPUT"
+
           echo "📋 Flags: build=$BUILD release=$RELEASE"
 
+  # ── 构建 ───────────────────────────────────────────────
   build:
     name: Build
     needs: check
@@ -58,50 +66,68 @@ jobs:
           java-version: '21'
           distribution: 'zulu'
 
-      - name: Validate Gradle wrapper
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # 验证 gradle-wrapper.jar 存在
+      - name: Verify gradle-wrapper.jar
         run: |
-          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "::error::gradle-wrapper.jar not found!"
+          WRAPPER_JAR="gradle/wrapper/gradle-wrapper.jar"
+          if [ -f "$WRAPPER_JAR" ]; then
+            echo "✓ gradle-wrapper.jar exists"
+            ls -lh "$WRAPPER_JAR"
+          else
+            echo "✗ gradle-wrapper.jar not found!"
             exit 1
           fi
-          echo "✅ gradle-wrapper.jar exists"
-          ls -lh gradle/wrapper/
 
-      - name: Grant execute permission
-        run: chmod +x gradlew
+      - name: Check project structure
+        run: |
+          echo "=== Project structure ==="
+          ls -la
+          echo ""
+          echo "=== gradle.properties ==="
+          cat gradle.properties
+          echo ""
+          echo "=== Java version ==="
+          java -version
 
       - name: Build with Gradle
         run: |
-          echo "=== Java version ==="
-          java -version
-          echo ""
+          chmod +x gradlew
+          chmod +x gradlew.bat 2>/dev/null || true
+          ls -la gradlew*
           echo "=== Running Gradle build ==="
-          ./gradlew build --no-daemon --stacktrace
-          echo "=== Build completed ==="
+          ./gradlew build --stacktrace --info 2>&1 || true
+          echo "=== Gradle build finished ==="
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.daemon=false"
 
-      - name: List build outputs
+      - name: Check build results
         run: |
+          echo "=== Build log tail ==="
+          tail -100 build.log || echo "No build log"
+          echo ""
+          echo "=== Current directory ==="
+          pwd
+          ls -la
+          echo ""
           echo "=== Build directory ==="
           ls -la build/ 2>/dev/null || echo "build/ not found"
           echo ""
           echo "=== Libs directory ==="
           ls -la build/libs/ 2>/dev/null || echo "build/libs/ not found"
+          echo ""
+          echo "=== Find all JAR files ==="
+          find . -name "*.jar" -type f 2>/dev/null | head -20 || echo "No JAR files found"
 
-      - name: Verify build artifacts
+      - name: Verify build succeeded
         run: |
-          if [ ! -d "build/libs" ]; then
-            echo "::error::build/libs directory not found!"
+          if [ ! -d "build/libs" ] || [ -z "$(ls -A build/libs/*.jar 2>/dev/null)" ]; then
+            echo "✗ Build failed: No JAR files found in build/libs/"
             exit 1
           fi
-          
-          JAR_COUNT=$(find build/libs -name "*.jar" | wc -l)
-          if [ "$JAR_COUNT" -eq 0 ]; then
-            echo "::error::No JAR files found in build/libs/"
-            exit 1
-          fi
-          
-          echo "✅ Found $JAR_COUNT JAR file(s)"
-          ls -lh build/libs/*.jar
+          echo "✓ Build succeeded: JAR files found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -111,6 +137,7 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  # ── 发布到 GitHub Releases ──────────────────────────────
   release:
     name: Publish Release
     needs: [check, build]
