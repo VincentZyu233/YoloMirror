@@ -4,6 +4,14 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        maven {
+            name = 'Hanbings Mirror'
+            url = 'https://repository.hanbings.io/proxy/'
+        }
+        maven {
+            name = 'IcedLab Mirror'
+            url = 'https://maven.icedlab.tech/loom/'
+        }
         gradlePluginPortal()
     }
 }
