@@ -87,6 +87,7 @@ def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description="YoloMirror Fabric Mod Builder")
     parser.add_argument('--version', type=str, help="指定新的模组版本号")
+    parser.add_argument('--clear', action='store_true', help="清除所有缓存和构建产物")
     args = parser.parse_args()
 
     proxy_url = f"http://{PROXY_HOST}:{PROXY_PORT}"
@@ -96,6 +97,22 @@ def main():
 
     # 确保 wrapper jar 存在
     ensure_wrapper_jar(jar_path, proxy_url)
+
+    # 如果指定了清除参数，删除构建目录和缓存
+    if args.clear:
+        print("[*] 清除构建目录和缓存...")
+        build_dir = os.path.join(PROJECT_DIR, "build")
+        
+        if os.path.exists(build_dir):
+            import shutil
+            try:
+                shutil.rmtree(build_dir)
+                print("[*] 已删除 build 目录")
+            except Exception as e:
+                print(f"[*] 删除 build 目录时出错: {e}")
+        
+        # 只删除 build 目录，不删除 .gradle 缓存目录，避免权限问题
+        print("[*] 清除完成")
 
     # 如果指定了版本号，更新 gradle.properties
     if args.version:

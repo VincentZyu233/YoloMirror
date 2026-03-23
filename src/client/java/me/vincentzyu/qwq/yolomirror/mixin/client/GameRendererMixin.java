@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import me.vincentzyu.qwq.yolomirror.client.YoloMirrorClient;
 import net.minecraft.client.render.GameRenderer;
 import org.joml.Matrix4f;
-import org.joml.Quaternionfc;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 

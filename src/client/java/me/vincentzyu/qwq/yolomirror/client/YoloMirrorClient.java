@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 import com.google.gson.JsonObject;
@@ -20,6 +21,7 @@ public class YoloMirrorClient implements ClientModInitializer {
     private static WebSocketClient webSocketClient;
     private static boolean isWebSocketConnected = false;
     private static final float SMOOTHING_FACTOR = 0.1f;
+    private static String currentWebSocketUrl = "ws://0.0.0.0:60321";
 
     @Override
     public void onInitializeClient() {
@@ -62,10 +64,18 @@ public class YoloMirrorClient implements ClientModInitializer {
 
         dispatcher.register(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal("start_roll_mirror")
                 .executes(context -> {
-                    startWebSocketConnection();
-                    context.getSource().sendFeedback(Text.literal("Starting roll mirror connection..."));
+                    startWebSocketConnection(currentWebSocketUrl);
+                    context.getSource().sendFeedback(Text.literal("Starting roll mirror connection to " + currentWebSocketUrl + "..."));
                     return 1;
-                }));
+                })
+                .then(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.argument("url", StringArgumentType.greedyString())
+                        .executes(context -> {
+                            String url = StringArgumentType.getString(context, "url");
+                            currentWebSocketUrl = url;
+                            startWebSocketConnection(url);
+                            context.getSource().sendFeedback(Text.literal("Starting roll mirror connection to " + url + "..."));
+                            return 1;
+                        })));
 
         dispatcher.register(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal("end_roll_mirror")
                 .executes(context -> {
@@ -73,16 +83,23 @@ public class YoloMirrorClient implements ClientModInitializer {
                     context.getSource().sendFeedback(Text.literal("Stopping roll mirror connection..."));
                     return 1;
                 }));
+
+        dispatcher.register(net.fabricmc.fabric.api.client.command.v2.ClientCommandManager.literal("roll_mirror_status")
+                .executes(context -> {
+                    String status = isWebSocketConnected ? "Connected" : "Disconnected";
+                    context.getSource().sendFeedback(Text.literal("Roll mirror status: " + status + " (URL: " + currentWebSocketUrl + ")"));
+                    return 1;
+                }));
     }
 
-    private void startWebSocketConnection() {
+    private void startWebSocketConnection(String url) {
         try {
-            URI uri = new URI("ws://0.0.0.0:60321");
+            URI uri = new URI(url);
             webSocketClient = new WebSocketClient(uri) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
                     isWebSocketConnected = true;
-                    System.out.println("WebSocket connected!");
+                    System.out.println("WebSocket connected to " + url);
                 }
 
                 @Override
@@ -114,6 +131,7 @@ public class YoloMirrorClient implements ClientModInitializer {
             };
             webSocketClient.connect();
         } catch (URISyntaxException e) {
+            System.err.println("Invalid WebSocket URL: " + url);
             e.printStackTrace();
         }
     }
