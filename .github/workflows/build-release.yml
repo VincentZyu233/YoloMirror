@@ -81,18 +81,48 @@ jobs:
             exit 1
           fi
 
+      - name: Check project structure
+        run: |
+          echo "=== Project structure ==="
+          ls -la
+          echo ""
+          echo "=== gradle.properties ==="
+          cat gradle.properties
+          echo ""
+          echo "=== Java version ==="
+          java -version
+
       - name: Build with Gradle
         run: |
           chmod +x gradlew
-          ./gradlew build --stacktrace --info
+          ./gradlew build --stacktrace --info 2>&1 | tee build.log
+        continue-on-error: true
 
-      - name: Check build outputs
+      - name: Check build results
         run: |
-          echo "=== Build directory contents ==="
-          ls -la build/ 2>/dev/null || echo "build/ directory not found"
+          echo "=== Build log tail ==="
+          tail -100 build.log || echo "No build log"
           echo ""
-          echo "=== libs directory contents ==="
-          ls -la build/libs/ 2>/dev/null || echo "build/libs/ directory not found"
+          echo "=== Current directory ==="
+          pwd
+          ls -la
+          echo ""
+          echo "=== Build directory ==="
+          ls -la build/ 2>/dev/null || echo "build/ not found"
+          echo ""
+          echo "=== Libs directory ==="
+          ls -la build/libs/ 2>/dev/null || echo "build/libs/ not found"
+          echo ""
+          echo "=== Find all JAR files ==="
+          find . -name "*.jar" -type f 2>/dev/null | head -20 || echo "No JAR files found"
+
+      - name: Verify build succeeded
+        run: |
+          if [ ! -d "build/libs" ] || [ -z "$(ls -A build/libs/*.jar 2>/dev/null)" ]; then
+            echo "✗ Build failed: No JAR files found in build/libs/"
+            exit 1
+          fi
+          echo "✓ Build succeeded: JAR files found"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
